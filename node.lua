@@ -24,6 +24,8 @@ local function words(s) local a={} for w in tostring(s or ""):gmatch("%S+") do a
 local function pkt_time() return os.date("!*t", os.time() + PKT_OFFSET_SECONDS) end
 local function date_iso(t) return string.format("%04d-%02d-%02d",t.year,t.month,t.day) end
 local function today_iso() return date_iso(pkt_time()) end
+local function tomorrow_time() return os.date("!*t", os.time() + PKT_OFFSET_SECONDS + 86400) end
+local function tomorrow_iso() return date_iso(tomorrow_time()) end
 local function now_seconds() local t=pkt_time(); return t.hour*3600+t.min*60+t.sec end
 local function date_label(t) return string.format("%02d %s %04d",t.day,months[t.month],t.year) end
 local function time_label(t) local h=t.hour%12; if h==0 then h=12 end; return string.format("%02d:%02d:%02d %s",h,t.min,t.sec,t.hour>=12 and "PM" or "AM") end
@@ -79,6 +81,13 @@ local function countdown(e,is_current)
   if daysleft>0 then return string.format("STARTS IN  %dD %02d:%02d:%02d",daysleft,hours,mins,secs) end
   return string.format("STARTS IN  %02d:%02d:%02d",hours,mins,secs)
 end
+local function compact_class_name(sec)
+  local id=tostring(sec.id or "")
+  -- Keep specialization section identifiers readable in the narrow table column.
+  id=id:gsub("^BSCS%-SPEC%-", "BSCS-")
+  id=id:gsub("^BSITADP2Year", "BSIT-ADP")
+  return id~="" and id or "—"
+end
 local function build_data()
   all_exams,dates,sections={}, {}, {}
   local date_seen,section_seen={},{}
@@ -86,7 +95,7 @@ local function build_data()
     for _,sec in ipairs(fam.sections or {}) do
       if not section_seen[sec.id] then section_seen[sec.id]=true; sections[#sections+1]={id=sec.id,name=sec.name or sec.id} end
       for _,row in ipairs(sec.rows or {}) do
-        local e={date=row.date_iso or "",date_label=row.date_label or row.date_iso or "",time=row.time or "",start_min=tonumber(row.start_min),end_min=tonumber(row.end_min),code=row.code or "",course=row.course or "",room=row.room or "",invigilator=row.invigilator or "",students=row.students or "",section=sec.id,program=row.program or sec.program or "",semester=sec.semester or "",shift=sec.shift or ""}
+        local e={date=row.date_iso or "",date_label=row.date_label or row.date_iso or "",time=row.time or "",start_min=tonumber(row.start_min),end_min=tonumber(row.end_min),code=row.code or "",course=row.course or "",room=row.room or "",invigilator=row.invigilator or "",students=row.students or "",section=sec.id,class_name=compact_class_name(sec),program=row.program or sec.program or "",semester=sec.semester or "",shift=sec.shift or ""}
         all_exams[#all_exams+1]=e
         if e.date~="" and not date_seen[e.date] then date_seen[e.date]=true; dates[#dates+1]={iso=e.date,label=e.date_label} end
       end
@@ -101,12 +110,13 @@ end
 util.json_watch("exam.json",function(v) data=v or {}; build_data() end)
 util.json_watch("config.json",function(v) v=v or {}; cfg.rows_per_page=clamp(tonumber(v.rows_per_page or 6) or 6,4,7) end)
 local function status_exams()
-  local today=today_iso(); local sec=now_seconds(); local cur,nxt=nil,nil
+  local today=today_iso(); local tomorrow=tomorrow_iso(); local sec=now_seconds(); local cur,nxt=nil,nil
   for _,e in ipairs(all_exams) do
     if e.date==today and e.start_min and e.end_min and sec>=e.start_min*60 and sec<e.end_min*60 then cur=e; break end
   end
+  -- Upcoming panel prioritizes the next calendar day, not a later slot today.
   for _,e in ipairs(all_exams) do
-    if e.date>today or (e.date==today and e.start_min and e.start_min*60>sec) then nxt=e; break end
+    if e.date>today then nxt=e; break end
   end
   return cur,nxt
 end
@@ -123,11 +133,11 @@ local function draw_card(x,y,w,h,title,color,e,is_current)
   text(bold,x+20,y+57,lines[1] or "",size,0.04,0.12,0.24,1)
   if lines[2] then text(bold,x+20,y+57+size+2,lines[2],size,0.04,0.12,0.24,1) end
   local yy=y+57+(lines[2] and size*2+8 or size+10)
-  local details={{"DATE",e.date_label},{"TIME",e.time},{"ROOM",e.room~="" and e.room or "—"},{"INVIGILATOR",e.invigilator~="" and e.invigilator or "—"},{"STUDENTS",e.students~="" and e.students or "—"}}
+  local details={{"DATE",e.date_label},{"TIME",e.time},{"CLASS",e.class_name or e.section or "—"},{"ROOM",e.room~="" and e.room or "—"},{"INVIGILATOR",e.invigilator~="" and e.invigilator or "—"},{"STUDENTS",e.students~="" and e.students or "—"}}
   for i,d in ipairs(details) do
-    if yy+(i-1)*25<y+h-35 then
-      text(bold,x+21,yy+(i-1)*25,d[1]..":",14,0.08,0.22,0.36,1)
-      text(font,x+120,yy+(i-1)*25,fit(d[2],font,15,w-138),15,0.05,0.13,0.25,1)
+    if yy+(i-1)*22<y+h-35 then
+      text(bold,x+21,yy+(i-1)*22,d[1]..":",14,0.08,0.22,0.36,1)
+      text(font,x+120,yy+(i-1)*22,fit(d[2],font,15,w-138),15,0.05,0.13,0.25,1)
     end
   end
   rect(x+12,y+h-30,w-24,24,is_current and 0.87 or 0.87,is_current and 0.96 or 0.94,1,1)
@@ -135,7 +145,7 @@ local function draw_card(x,y,w,h,title,color,e,is_current)
 end
 function node.render()
   local t=pkt_time(); local today=today_iso(); local now=sys.now()
-  if #dates>1 and now-date_started>=DATE_ROTATE_SECONDS then date_index=date_index+1; if date_index>#dates then date_index=1 end; date_started=now; page_index=1; page_started=now end
+  -- The dashboard stays anchored to the live PKT date; it does not rotate through old exam dates.
   if now-page_started>=ROTATE_SECONDS then page_index=page_index+1; page_started=now end
   if now-footer_started>=FOOTER_ROTATE_SECONDS then footer_index=footer_index+6; if footer_index>#sections then footer_index=1 end; footer_started=now end
   gl.clear(0.94,0.96,0.98,1)
@@ -150,23 +160,28 @@ function node.render()
   text(bold,38,168,"MID TERM EXAMINATION",40,0.03,0.12,0.25,1)
   text(font,40,214,"FALL 2026  •  28 OCTOBER – 06 NOVEMBER 2026",23,0.08,0.20,0.36,1)
   rect(1335,162,585,68,0.99,0.75,0.10,1); center(bold,1335,181,585,"EXAMINATION TIMETABLE",29,0.03,0.12,0.25,1)
-  -- Date tabs
-  local tabY,tabH,tabX,tabGap=260,82,28,10
-  local tabW=math.floor((W-56-(#dates-1)*tabGap)/#dates)
-  for i,d in ipairs(dates) do
-    local x=tabX+(i-1)*(tabW+tabGap); local active=(i==date_index)
-    rect(x,tabY,tabW,tabH,active and 0.04 or 0.91,active and 0.25 or 0.95,active and 0.48 or 0.98,1)
-    center(bold,x,tabY+17,tabW,d.label,20,active and 1 or 0.04,active and 1 or 0.16,active and 1 or 0.30,1)
-    local iso=d.iso; local yy,mm,dd=iso:match("^(%d%d%d%d)%-(%d%d)%-(%d%d)$"); local dt=os.date("!*t",os.time({year=tonumber(yy),month=tonumber(mm),day=tonumber(dd),hour=12}) ); center(font,x,tabY+48,tabW,days[dt.wday]:upper(),15,active and 1 or 0.10,active and 1 or 0.24,active and 1 or 0.38,1)
+  -- Date cards: TODAY and TOMORROW only.
+  local tabY,tabH,tabW,tabGap,tabX=260,82,510,22,28
+  local todayObj=pkt_time(); local tomorrowObj=tomorrow_time()
+  local tabItems={
+    {label="TODAY",iso=today_iso(),date=date_label(todayObj),weekday=days[todayObj.wday]:upper(),active=true},
+    {label="TOMORROW",iso=tomorrow_iso(),date=date_label(tomorrowObj),weekday=days[tomorrowObj.wday]:upper(),active=false}
+  }
+  for i,d in ipairs(tabItems) do
+    local x=tabX+(i-1)*(tabW+tabGap); local active=d.active
+    rect(x,tabY,tabW,tabH,active and 0.04 or 0.88,active and 0.25 or 0.93,active and 0.48 or 0.98,1)
+    center(bold,x,tabY+10,tabW,d.label,17,active and 1 or 0.04,active and 1 or 0.16,active and 1 or 0.30,1)
+    center(bold,x,tabY+31,tabW,d.date,22,active and 1 or 0.04,active and 1 or 0.16,active and 1 or 0.30,1)
+    center(font,x,tabY+58,tabW,d.weekday,15,active and 1 or 0.10,active and 1 or 0.24,active and 1 or 0.38,1)
   end
-  local selected=dates[date_index] or dates[1]; local dateExams={}
-  if selected then for _,e in ipairs(all_exams) do if e.date==selected.iso then dateExams[#dateExams+1]=e end end end
+  local selected={iso=today_iso(),label=date_label(todayObj)}; local dateExams={}
+  for _,e in ipairs(all_exams) do if e.date==selected.iso then dateExams[#dateExams+1]=e end end
   local leftX,leftY,leftW=28,360,1350; local rightX,rightW=1390,502
   rect(leftX,leftY,leftW,468,0.985,0.995,1,1); rect(leftX,leftY,leftW,64,0.03,0.23,0.46,1)
-  text(bold,leftX+24,leftY+17,(selected and (selected.label:upper()) or "EXAMINATION DATE"),28,1,1,1,1)
+  text(bold,leftX+24,leftY+17,("TODAY, "..selected.label:upper()),28,1,1,1,1)
   rect(leftX+leftW-245,leftY+12,220,42,0.94,0.97,1,1); center(bold,leftX+leftW-245,leftY+22,220,"TOTAL EXAMS: "..#dateExams,18,0.03,0.13,0.30,1)
   local headerY=leftY+64; rect(leftX,headerY,leftW,48,0.04,0.17,0.35,1)
-  local cols={70,175,165,330,150,310,150}; local labels={"Sr. No.","Time","Course Code","Course Title","Room","Invigilator","Students"}; local xx=leftX
+  local cols={65,155,145,260,150,125,290,160}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
   for i,cw in ipairs(cols) do center(bold,xx,headerY+14,cw,labels[i],16,1,1,1,1); if i>1 then line(xx,headerY,xx,headerY+48,1,0.45,0.59,0.74,1) end; xx=xx+cw end
   local rows=cfg.rows_per_page; local tableH=leftY+468-(headerY+48); local rowH=math.floor(tableH/rows); local maxPage=math.max(1,math.ceil(#dateExams/rows)); if page_index>maxPage then page_index=1 end
   local start=(page_index-1)*rows+1
@@ -175,11 +190,11 @@ function node.render()
     rect(leftX,y,leftW,rowH,(r%2==0) and 0.91 or 0.99,(r%2==0) and 0.95 or 0.995,(r%2==0) and 0.98 or 1,1)
     line(leftX,y+rowH,leftX+leftW,y+rowH,1,0.78,0.86,0.93,1)
     if e then
-      local vals={tostring(idx),e.time,e.code,e.course,e.room,e.invigilator,e.students}
+      local vals={tostring(idx),e.time,e.code,e.course,e.class_name or e.section or "—",e.room,e.invigilator,e.students}
       local x=leftX
       for i,cw in ipairs(cols) do
         if i==4 then local lines,size=wrap2(vals[i],bold,cw-16,17,12); local ty=y+(lines[2] and 7 or math.floor((rowH-size)/2)); text(bold,x+8,ty,lines[1] or "",size,0.04,0.12,0.23,1); if lines[2] then text(bold,x+8,ty+size+2,lines[2],size,0.04,0.12,0.23,1) end
-        elseif i==3 then center(bold,x,y+math.floor((rowH-16)/2),cw,fit(vals[i],bold,16,cw-12),16,0.04,0.12,0.23,1)
+        elseif i==3 or i==5 then center(bold,x,y+math.floor((rowH-16)/2),cw,fit(vals[i],bold,15,cw-12),15,0.04,0.12,0.23,1)
         else center(font,x,y+math.floor((rowH-15)/2),cw,fit(vals[i],font,15,cw-12),15,0.04,0.12,0.23,1) end
         if i>1 then line(x,y,x,y+rowH,1,0.80,0.87,0.93,1) end; x=x+cw
       end
