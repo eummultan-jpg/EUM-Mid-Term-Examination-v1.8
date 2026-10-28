@@ -13,6 +13,7 @@ local page_index, date_index, footer_index = 1, 1, 1
 local ROTATE_SECONDS = 10
 local DATE_ROTATE_SECONDS = 15
 local FOOTER_ROTATE_SECONDS = 12
+local PANEL_ROTATE_SECONDS = 8 -- rotate exams in NOW/NEXT when multiple share a slot
 local PKT_OFFSET_SECONDS = 5 * 60 * 60
 local days = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"}
 local months = {"January","February","March","April","May","June","July","August","September","October","November","December"}
@@ -109,32 +110,51 @@ local function build_data()
 end
 util.json_watch("exam.json",function(v) data=v or {}; build_data() end)
 util.json_watch("config.json",function(v) v=v or {}; cfg.rows_per_page=clamp(tonumber(v.rows_per_page or 6) or 6,4,7) end)
+local function pick_rotating(items, now)
+  if #items == 0 then return nil, 0, 0 end
+  -- Use a stable 8-second interval so all devices rotate predictably.
+  local slot = math.floor(now / PANEL_ROTATE_SECONDS)
+  local index = (slot % #items) + 1
+  return items[index], index, #items
+end
+
 local function status_exams()
-  local today=today_iso(); local tomorrow=tomorrow_iso(); local sec=now_seconds(); local cur,nxt=nil,nil
-  for _,e in ipairs(all_exams) do
-    if e.date==today and e.start_min and e.end_min and sec>=e.start_min*60 and sec<e.end_min*60 then cur=e; break end
-  end
-  -- Upcoming panel: choose the next not-yet-started exam today first.
-  -- If today's schedule is finished, fall forward to the earliest exam on a future date.
+  local today=today_iso(); local sec=now_seconds()
+  local now_epoch=date_num(today)*86400+sec
+  local active, upcoming = {}, {}
+  local earliest_start=nil
+
+  -- NOW: include every exam currently in progress, including parallel classes.
   for _,e in ipairs(all_exams) do
     if e.date==today and e.start_min and e.end_min then
       local start_sec=e.start_min*60
       local end_sec=e.end_min*60
-      if sec < start_sec then
-        nxt=e
-        break
+      if sec>=start_sec and sec<end_sec then active[#active+1]=e end
+    end
+  end
+
+  -- NEXT: find the earliest exam slot that has not started yet. Gather every
+  -- exam sharing that exact date and start time, then rotate within that group.
+  for _,e in ipairs(all_exams) do
+    if e.date~="" and e.start_min then
+      local start_epoch=exam_epoch(e)
+      if start_epoch>now_epoch then
+        if not earliest_start or start_epoch<earliest_start then
+          earliest_start=start_epoch
+          upcoming={e}
+        elseif start_epoch==earliest_start then
+          upcoming[#upcoming+1]=e
+        end
       end
-      -- Skip exams already in progress or completed; NOW is shown separately.
     end
   end
-  if not nxt then
-    for _,e in ipairs(all_exams) do
-      if e.date>today then nxt=e; break end
-    end
-  end
-  return cur,nxt
+
+  local now=sys.now()
+  local cur,cur_index,cur_count=pick_rotating(active,now)
+  local nxt,nxt_index,nxt_count=pick_rotating(upcoming,now)
+  return cur,nxt,cur_index,cur_count,nxt_index,nxt_count
 end
-local function draw_card(x,y,w,h,title,color,e,is_current)
+local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotation_count)
   rect(x,y,w,h,0.985,0.992,1,1); rect(x,y,w,46,color[1],color[2],color[3],1)
   text(bold,x+18,y+12,title,23,1,1,1,1)
   if not e then
@@ -155,7 +175,9 @@ local function draw_card(x,y,w,h,title,color,e,is_current)
     end
   end
   rect(x+12,y+h-30,w-24,24,is_current and 0.87 or 0.87,is_current and 0.96 or 0.94,1,1)
-  text(bold,x+22,y+h-25,countdown(e,is_current),15,is_current and 0.02 or 0.02,is_current and 0.42 or 0.32,is_current and 0.22 or 0.60,1)
+  local footer=countdown(e,is_current)
+  if rotation_count and rotation_count>1 then footer=footer..string.format("  •  EXAM %d OF %d",rotation_index,rotation_count) end
+  text(bold,x+22,y+h-25,footer,15,is_current and 0.02 or 0.02,is_current and 0.42 or 0.32,is_current and 0.22 or 0.60,1)
 end
 function node.render()
   local t=pkt_time(); local today=today_iso(); local now=sys.now()
@@ -214,9 +236,9 @@ function node.render()
       end
     end
   end
-  local cur,nxt=status_exams()
-  draw_card(rightX,350,rightW,280,"NOW  •  CURRENT EXAM",{0.02,0.48,0.29},cur,true)
-  draw_card(rightX,640,rightW,280,"NEXT  •  UPCOMING EXAM (NEXT SLOT)",{0.03,0.38,0.88},nxt,false)
+  local cur,nxt,curIndex,curCount,nxtIndex,nxtCount=status_exams()
+  draw_card(rightX,350,rightW,280,"NOW  •  CURRENT EXAM",{0.02,0.48,0.29},cur,true,curIndex,curCount)
+  draw_card(rightX,640,rightW,280,"NEXT  •  UPCOMING EXAM (NEXT SLOT)",{0.03,0.38,0.88},nxt,false,nxtIndex,nxtCount)
   -- Footer
   rect(0,960,W,120,0.01,0.09,0.26,1)
   text(bold,38,982,"UPCOMING",21,1,1,1,1); text(bold,38,1012,"SECTIONS:",21,1,1,1,1)
