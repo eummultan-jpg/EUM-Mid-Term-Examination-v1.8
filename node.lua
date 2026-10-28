@@ -114,9 +114,23 @@ local function status_exams()
   for _,e in ipairs(all_exams) do
     if e.date==today and e.start_min and e.end_min and sec>=e.start_min*60 and sec<e.end_min*60 then cur=e; break end
   end
-  -- Upcoming panel prioritizes the next calendar day, not a later slot today.
+  -- Upcoming panel: choose the next not-yet-started exam today first.
+  -- If today's schedule is finished, fall forward to the earliest exam on a future date.
   for _,e in ipairs(all_exams) do
-    if e.date>today then nxt=e; break end
+    if e.date==today and e.start_min and e.end_min then
+      local start_sec=e.start_min*60
+      local end_sec=e.end_min*60
+      if sec < start_sec then
+        nxt=e
+        break
+      end
+      -- Skip exams already in progress or completed; NOW is shown separately.
+    end
+  end
+  if not nxt then
+    for _,e in ipairs(all_exams) do
+      if e.date>today then nxt=e; break end
+    end
   end
   return cur,nxt
 end
