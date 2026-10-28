@@ -1,4 +1,4 @@
-# EUM Mid Term Examination — info-beamer v1.9
+# EUM Mid Term Examination — info-beamer v2.1
 
 Date-wise Fall 2026 examination display for Emerson University Multan, Faculty of Computing & Emerging Technologies.
 
