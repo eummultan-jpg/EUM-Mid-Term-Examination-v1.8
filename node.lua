@@ -136,7 +136,9 @@ local function status_exams()
 end
 local function draw_card(x,y,w,h,title,color,e,is_current)
   rect(x,y,w,h,0.985,0.992,1,1); rect(x,y,w,46,color[1],color[2],color[3],1)
-  text(bold,x+18,y+12,title,23,1,1,1,1)
+  -- Center the panel heading and use a smaller size so long NEXT headings fit at 1920x1080.
+  local title_size = (title:find("NEXT", 1, true) and 19 or 23)
+  center(bold,x+10,y+12,w-20,title,title_size,1,1,1,1)
   if not e then
     text(bold,x+22,y+72,is_current and "NO EXAM NOW" or "NO UPCOMING EXAM",24,0.06,0.15,0.28,1)
     text(font,x+22,y+106,is_current and "No examination is in progress." or "No further scheduled examination.",16,0.25,0.33,0.43,1)
