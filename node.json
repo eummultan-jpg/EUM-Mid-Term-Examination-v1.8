@@ -1,0 +1,20 @@
+{
+  "name": "EUM Mid Term Examination",
+  "options": [
+    {
+      "title": "Rows per page",
+      "name": "rows_per_page",
+      "type": "string",
+      "default": "6",
+      "hint": "Number of date-wise examination rows visible at once (4\u20137)."
+    }
+  ],
+  "presets": {
+    "default": {
+      "desc": "Date-wise exam dashboard with current and next slot.",
+      "config": {
+        "rows_per_page": "6"
+      }
+    }
+  }
+}
