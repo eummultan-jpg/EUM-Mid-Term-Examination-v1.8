@@ -1,8 +1,8 @@
 {
   "name": "EUM Mid Term Examination",
   "author": "Emerson University Multan",
-  "desc": "Date-wise Fall 2026 examination dashboard showing today and tomorrow, class name, live PKT clock, current exam and next-day upcoming exam.",
-  "version": "2.0",
+  "desc": "Fall 2026 date-wise exam display with Today/Tomorrow tabs, class names, live PKT clock, current and next exam details.",
+  "version": "2.1",
   "lifecycle": "production",
   "platforms": [
     "pi/epoch-1",
@@ -13,6 +13,6 @@
   },
   "offline": {
     "support": "yes",
-    "info": "Official exam data is bundled in the package; the display works offline after installation."
+    "info": "Exam data is bundled from the official Fall 2026 date sheet; the display works offline after installation."
   }
 }
