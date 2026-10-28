@@ -136,9 +136,9 @@ local function status_exams()
 end
 local function draw_card(x,y,w,h,title,color,e,is_current)
   rect(x,y,w,h,0.985,0.992,1,1); rect(x,y,w,46,color[1],color[2],color[3],1)
-  -- Center the panel heading and use a smaller size so long NEXT headings fit at 1920x1080.
-  local title_size = (title:find("NEXT", 1, true) and 19 or 23)
-  center(bold,x+10,y+12,w-20,title,title_size,1,1,1,1)
+  local title_size = 20
+  local title_text = fit(title,bold,title_size,w-28)
+  center(bold,x+8,y+12,w-16,title_text,title_size,1,1,1,1)
   if not e then
     text(bold,x+22,y+72,is_current and "NO EXAM NOW" or "NO UPCOMING EXAM",24,0.06,0.15,0.28,1)
     text(font,x+22,y+106,is_current and "No examination is in progress." or "No further scheduled examination.",16,0.25,0.33,0.43,1)
@@ -198,7 +198,7 @@ function node.render()
   rect(leftX+leftW-245,leftY+12,220,42,0.94,0.97,1,1); center(bold,leftX+leftW-245,leftY+22,220,"TOTAL EXAMS: "..#dateExams,18,0.03,0.13,0.30,1)
   local headerY=leftY+64; rect(leftX,headerY,leftW,48,0.04,0.17,0.35,1)
   local cols={65,155,145,260,150,125,290,160}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
-  for i,cw in ipairs(cols) do center(bold,xx,headerY+14,cw,labels[i],16,1,1,1,1); if i>1 then line(xx,headerY,xx,headerY+48,1,0.45,0.59,0.74,1) end; xx=xx+cw end
+  for i,cw in ipairs(cols) do local hs=15; local hl=fit(labels[i],bold,hs,cw-8); center(bold,xx,headerY+14,cw,hl,hs,1,1,1,1); if i>1 then line(xx,headerY,xx,headerY+48,1,0.45,0.59,0.74,1) end; xx=xx+cw end
   local rows=cfg.rows_per_page; local tableH=leftY+468-(headerY+48); local rowH=math.floor(tableH/rows); local maxPage=math.max(1,math.ceil(#dateExams/rows)); if page_index>maxPage then page_index=1 end
   local start=(page_index-1)*rows+1
   for r=1,rows do
