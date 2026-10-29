@@ -156,7 +156,7 @@ local function status_exams()
 end
 local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotation_count)
   rect(x,y,w,h,0.985,0.992,1,1); rect(x,y,w,46,color[1],color[2],color[3],1)
-  text(bold,x+18,y+12,title,23,1,1,1,1)
+  text(bold,x+18,y+12,fit(title,bold,21,w-34),21,1,1,1,1)
   if not e then
     text(bold,x+22,y+72,is_current and "NO EXAM NOW" or "NO UPCOMING EXAM",24,0.06,0.15,0.28,1)
     text(font,x+22,y+106,is_current and "No examination is in progress." or "No further scheduled examination.",16,0.25,0.33,0.43,1)
@@ -171,13 +171,15 @@ local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotatio
   for i,d in ipairs(details) do
     if yy+(i-1)*22<y+h-35 then
       text(bold,x+21,yy+(i-1)*22,d[1]..":",13,0.08,0.22,0.36,1)
-      text(font,x+145,yy+(i-1)*22,fit(d[2],font,16,w-163),16,0.05,0.13,0.25,1)
+      text(font,x+158,yy+(i-1)*22,fit(d[2],font,16,w-176),16,0.05,0.13,0.25,1)
     end
   end
-  rect(x+12,y+h-32,w-24,28,0.87,is_current and 0.96 or 0.94,1,1)
+  rect(x+12,y+h-36,w-24,32,0.87,is_current and 0.96 or 0.94,1,1)
   local footer=countdown(e,is_current)
   if rotation_count and rotation_count>1 then footer=footer..string.format("  •  EXAM %d OF %d",rotation_index,rotation_count) end
-  text(bold,x+22,y+h-24,footer,18,is_current and 0.02 or 0.02,is_current and 0.42 or 0.32,is_current and 0.22 or 0.60,1)
+  local footer_size=21
+  footer=fit(footer,bold,footer_size,w-44)
+  text(bold,x+22,y+h-27,footer,footer_size,is_current and 0.02 or 0.02,is_current and 0.42 or 0.32,is_current and 0.22 or 0.60,1)
 end
 function node.render()
   local t=pkt_time(); local today=today_iso(); local now=sys.now()
