@@ -156,7 +156,7 @@ local function status_exams()
 end
 local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotation_count)
   rect(x,y,w,h,0.985,0.992,1,1); rect(x,y,w,46,color[1],color[2],color[3],1)
-  text(bold,x+18,y+12,title,23,1,1,1,1)
+  text(bold,x+18,y+12,fit(title,bold,18,w-36),18,1,1,1,1)
   if not e then
     text(bold,x+22,y+72,is_current and "NO EXAM NOW" or "NO UPCOMING EXAM",24,0.06,0.15,0.28,1)
     text(font,x+22,y+106,is_current and "No examination is in progress." or "No further scheduled examination.",16,0.25,0.33,0.43,1)
