@@ -172,8 +172,8 @@ local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotatio
     if yy+(i-1)*22<y+h-35 then
       text(bold,x+21,yy+(i-1)*22,d[1]..":",13,0.08,0.22,0.36,1)
       -- Give the invigilator label a wider gap before the person's name.
-      local value_x = (i==5) and (x+225) or (x+158)
-      local value_maxw = (i==5) and (w-243) or (w-176)
+      local value_x = (i==5) and (x+135) or (x+158)
+      local value_maxw = (i==5) and (w-150) or (w-176)
       text(font,value_x,yy+(i-1)*22,fit(d[2],font,16,value_maxw),16,0.05,0.13,0.25,1)
     end
   end
