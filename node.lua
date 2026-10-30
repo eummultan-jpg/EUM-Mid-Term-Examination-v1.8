@@ -156,7 +156,9 @@ local function status_exams()
 end
 local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotation_count)
   rect(x,y,w,h,0.985,0.992,1,1); rect(x,y,w,46,color[1],color[2],color[3],1)
-  text(bold,x+18,y+12,fit(title,bold,21,w-34),21,1,1,1,1)
+  local title_size=19
+  while title_size>15 and width(bold,title,title_size)>w-44 do title_size=title_size-1 end
+  text(bold,x+18,y+12,fit(title,bold,title_size,w-44),title_size,1,1,1,1)
   if not e then
     text(bold,x+22,y+72,is_current and "NO EXAM NOW" or "NO UPCOMING EXAM",24,0.06,0.15,0.28,1)
     text(font,x+22,y+106,is_current and "No examination is in progress." or "No further scheduled examination.",16,0.25,0.33,0.43,1)
@@ -250,7 +252,7 @@ function node.render()
   end
   local cur,nxt,curIndex,curCount,nxtIndex,nxtCount=status_exams()
   draw_card(rightX,350,rightW,280,"NOW  •  CURRENT EXAM",{0.02,0.48,0.29},cur,true,curIndex,curCount)
-  draw_card(rightX,640,rightW,280,"NEXT  •  UPCOMING EXAM (NEXT SLOT)",{0.03,0.38,0.88},nxt,false,nxtIndex,nxtCount)
+  draw_card(rightX,640,rightW,280,"NEXT  •  UPCOMING EXAM",{0.03,0.38,0.88},nxt,false,nxtIndex,nxtCount)
   -- Footer
   rect(0,960,W,120,0.01,0.09,0.26,1)
   text(bold,58,982,"UPCOMING",21,1,1,1,1); text(bold,58,1012,"SECTIONS:",21,1,1,1,1)
