@@ -180,8 +180,15 @@ local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotatio
   rect(x+12,y+h-36,w-24,32,0.87,is_current and 0.96 or 0.94,1,1)
   local footer=countdown(e,is_current)
   if rotation_count and rotation_count>1 then footer=footer..string.format("  •  EXAM %d OF %d",rotation_index,rotation_count) end
-  local footer_size=21
-  footer=fit(footer,bold,footer_size,w-44)
+  -- Fit the complete countdown and rotation counter inside the footer bar.
+  -- Reduce the font dynamically instead of cutting off "EXAM n OF total".
+  local footer_size=19
+  while footer_size>13 and width(bold,footer,footer_size)>w-44 do
+    footer_size=footer_size-1
+  end
+  if width(bold,footer,footer_size)>w-44 then
+    footer=fit(footer,bold,footer_size,w-44)
+  end
   text(bold,x+22,y+h-27,footer,footer_size,is_current and 0.02 or 0.02,is_current and 0.42 or 0.32,is_current and 0.22 or 0.60,1)
 end
 function node.render()
