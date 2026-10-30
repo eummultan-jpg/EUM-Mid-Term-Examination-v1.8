@@ -172,8 +172,8 @@ local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotatio
     if yy+(i-1)*22<y+h-35 then
       text(bold,x+21,yy+(i-1)*22,d[1]..":",13,0.08,0.22,0.36,1)
       -- Give the invigilator label a wider gap before the person's name.
-      local value_x = (i==5) and (x+205) or (x+158)
-      local value_maxw = (i==5) and (w-223) or (w-176)
+      local value_x = (i==5) and (x+225) or (x+158)
+      local value_maxw = (i==5) and (w-243) or (w-176)
       text(font,value_x,yy+(i-1)*22,fit(d[2],font,16,value_maxw),16,0.05,0.13,0.25,1)
     end
   end
@@ -191,18 +191,18 @@ function node.render()
   if now-footer_started>=FOOTER_ROTATE_SECONDS then footer_index=footer_index+6; if footer_index>#sections then footer_index=1 end; footer_started=now end
   gl.clear(0.94,0.96,0.98,1)
   -- University header
-  rect(0,0,W,151,0.985,0.99,1,1); logo:draw(24,5,165,143)
-  text(bold,185,27,"EMERSON UNIVERSITY MULTAN",43,0.03,0.15,0.30,1)
+  rect(0,0,W,151,0.985,0.99,1,1); logo:draw(44,5,165,143)
+  text(bold,205,27,"EMERSON UNIVERSITY MULTAN",43,0.03,0.15,0.30,1)
   text(font,187,82,"FACULTY OF COMPUTING & EMERGING TECHNOLOGIES",25,0.08,0.20,0.38,1)
   rect(1150,0,770,140,0.03,0.21,0.43,1); rect(1135,0,8,140,0.98,0.72,0.10,1)
   text(bold,1180,27,days[t.wday],25,1,1,1,1); text(bold,1180,61,date_label(t),23,1,1,1,1)
   line(1450,18,1450,120,2,0.58,0.72,0.88,1); text(bold,1480,28,time_label(t),31,1,1,1,1); text(font,1482,78,"PAKISTAN STANDARD TIME (PKT)",16,0.82,0.89,0.98,1)
   rect(0,143,W,7,0.98,0.72,0.10,1)
-  text(bold,38,168,"MID TERM EXAMINATION",40,0.03,0.12,0.25,1)
-  text(font,40,214,"FALL 2026  •  28 OCTOBER – 06 NOVEMBER 2026",23,0.08,0.20,0.36,1)
-  rect(1335,162,585,68,0.99,0.75,0.10,1); center(bold,1335,181,585,"EXAMINATION TIMETABLE",29,0.03,0.12,0.25,1)
+  text(bold,60,168,"MID TERM EXAMINATION",40,0.03,0.12,0.25,1)
+  text(font,60,214,"FALL 2026  •  28 OCTOBER – 06 NOVEMBER 2026",23,0.08,0.20,0.36,1)
+  rect(1320,162,550,68,0.99,0.75,0.10,1); center(bold,1320,181,550,"EXAMINATION TIMETABLE",29,0.03,0.12,0.25,1)
   -- Date cards: TODAY and TOMORROW only.
-  local tabY,tabH,tabW,tabGap,tabX=250,82,510,22,28
+  local tabY,tabH,tabW,tabGap,tabX=250,82,500,22,50
   local todayObj=pkt_time(); local tomorrowObj=tomorrow_time()
   local tabItems={
     {label="TODAY",iso=today_iso(),date=date_label(todayObj),weekday=days[todayObj.wday]:upper(),active=true},
@@ -217,12 +217,12 @@ function node.render()
   end
   local selected={iso=today_iso(),label=date_label(todayObj)}; local dateExams={}
   for _,e in ipairs(all_exams) do if e.date==selected.iso then dateExams[#dateExams+1]=e end end
-  local leftX,leftY,leftW=28,350,1350; local rightX,rightW=1390,502
+  local leftX,leftY,leftW=50,350,1318; local rightX,rightW=1380,490
   rect(leftX,leftY,leftW,478,0.985,0.995,1,1); rect(leftX,leftY,leftW,64,0.03,0.23,0.46,1)
   text(bold,leftX+24,leftY+17,("TODAY, "..selected.label:upper()),28,1,1,1,1)
   rect(leftX+leftW-245,leftY+12,220,42,0.94,0.97,1,1); center(bold,leftX+leftW-245,leftY+22,220,"TOTAL EXAMS: "..#dateExams,18,0.03,0.13,0.30,1)
   local headerY=leftY+64; rect(leftX,headerY,leftW,48,0.04,0.17,0.35,1)
-  local cols={65,155,145,260,150,125,290,160}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
+  local cols={65,145,140,250,145,120,285,168}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
   for i,cw in ipairs(cols) do center(bold,xx,headerY+14,cw,labels[i],16,1,1,1,1); if i>1 then line(xx,headerY,xx,headerY+48,1,0.45,0.59,0.74,1) end; xx=xx+cw end
   local rows=cfg.rows_per_page; local tableH=leftY+478-(headerY+48); local rowH=math.floor(tableH/rows); local maxPage=math.max(1,math.ceil(#dateExams/rows)); if page_index>maxPage then page_index=1 end
   local start=(page_index-1)*rows+1
@@ -246,8 +246,8 @@ function node.render()
   draw_card(rightX,640,rightW,280,"NEXT  •  UPCOMING EXAM (NEXT SLOT)",{0.03,0.38,0.88},nxt,false,nxtIndex,nxtCount)
   -- Footer
   rect(0,960,W,120,0.01,0.09,0.26,1)
-  text(bold,38,982,"UPCOMING",21,1,1,1,1); text(bold,38,1012,"SECTIONS:",21,1,1,1,1)
-  local bx,bw,gap=185,142,10
+  text(bold,58,982,"UPCOMING",21,1,1,1,1); text(bold,58,1012,"SECTIONS:",21,1,1,1,1)
+  local bx,bw,gap=205,142,10
   for i=0,6 do local idx=footer_index+i; while idx>#sections do idx=idx-#sections end; local s=sections[idx]; if s then local x=bx+i*(bw+gap); rect(x,978,bw,56,(i==0) and 0.99 or 0.04,(i==0) and 0.72 or 0.25,(i==0) and 0.10 or 0.48,1); center(bold,x,997,bw,fit(s.id,bold,15,bw-12),15,(i==0) and 0.03 or 1,(i==0) and 0.12 or 1,(i==0) and 0.22 or 1,1) end end
-  line(1320,980,1320,1038,2,0.58,0.69,0.83,1); text(bold,1360,997,"POWERED BY IT CENTER",21,1,1,1,1)
+  line(1340,980,1340,1038,2,0.58,0.69,0.83,1); text(bold,1380,997,"POWERED BY IT CENTER",21,1,1,1,1)
 end
