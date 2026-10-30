@@ -154,6 +154,26 @@ local function status_exams()
   local nxt,nxt_index,nxt_count=pick_rotating(upcoming,now)
   return cur,nxt,cur_index,cur_count,nxt_index,nxt_count
 end
+local function draw_live_banner(x,y,w,h,e,rotation_index,rotation_count)
+  -- Compact LIVE EXAM banner in the previously unused area below the timetable title.
+  rect(x,y,w,h,0.985,0.992,1,1)
+  rect(x,y,w,30,0.02,0.48,0.29,1)
+  text(bold,x+16,y+7,"LIVE EXAM  •  ON AIR",18,1,1,1,1)
+  if rotation_count and rotation_count>1 then
+    local counter=string.format("EXAM %d OF %d",rotation_index,rotation_count)
+    text(bold,x+w-width(bold,counter,14)-14,y+9,counter,14,1,1,1,1)
+  end
+  if not e then
+    text(bold,x+18,y+43,"NO EXAMINATION IN PROGRESS",18,0.05,0.16,0.27,1)
+    text(font,x+18,y+66,"The live exam panel will update automatically.",13,0.25,0.34,0.44,1)
+    return
+  end
+  local heading=(e.code~="" and e.code.."  —  " or "")..e.course
+  text(bold,x+16,y+39,fit(heading,bold,18,w-32),18,0.04,0.13,0.25,1)
+  local details=string.format("CLASS: %s     ROOM: %s     TIME: %s",e.class_name or e.section or "—",e.room~="" and e.room or "—",e.time or "—")
+  text(font,x+16,y+66,fit(details,font,14,w-32),14,0.06,0.20,0.34,1)
+end
+
 local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotation_count)
   rect(x,y,w,h,0.985,0.992,1,1); rect(x,y,w,46,color[1],color[2],color[3],1)
   local title_size=19
@@ -251,6 +271,7 @@ function node.render()
     end
   end
   local cur,nxt,curIndex,curCount,nxtIndex,nxtCount=status_exams()
+  draw_live_banner(1320,245,550,92,cur,curIndex,curCount)
   draw_card(rightX,350,rightW,280,"NOW  •  CURRENT EXAM",{0.02,0.48,0.29},cur,true,curIndex,curCount)
   draw_card(rightX,640,rightW,280,"NEXT  •  UPCOMING EXAM",{0.03,0.38,0.88},nxt,false,nxtIndex,nxtCount)
   -- Footer
