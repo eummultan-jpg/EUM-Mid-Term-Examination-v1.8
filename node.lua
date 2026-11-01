@@ -255,20 +255,55 @@ function node.render()
   local headerY=leftY+64; rect(leftX,headerY,leftW,48,0.04,0.17,0.35,1)
   local cols={65,145,140,250,145,120,285,168}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
   for i,cw in ipairs(cols) do center(bold,xx,headerY+14,cw,labels[i],16,1,1,1,1); if i>1 then line(xx,headerY,xx,headerY+48,1,0.45,0.59,0.74,1) end; xx=xx+cw end
-  local rows=cfg.rows_per_page; local tableH=leftY+478-(headerY+48); local rowH=math.floor(tableH/rows); local maxPage=math.max(1,math.ceil(#dateExams/rows)); if page_index>maxPage then page_index=1 end
-  local start=(page_index-1)*rows+1
-  for r=1,rows do
-    local idx=start+r-1; local e=dateExams[idx]; local y=headerY+48+(r-1)*rowH
-    rect(leftX,y,leftW,rowH,(r%2==0) and 0.91 or 0.99,(r%2==0) and 0.95 or 0.995,(r%2==0) and 0.98 or 1,1)
-    line(leftX,y+rowH,leftX+leftW,y+rowH,1,0.78,0.86,0.93,1)
-    if e then
-      local vals={tostring(idx),e.time,e.code,e.course,e.class_name or e.section or "—",e.room,e.invigilator,e.students}
-      local x=leftX
-      for i,cw in ipairs(cols) do
-        if i==4 then local lines,size=wrap2(vals[i],bold,cw-16,17,12); local ty=y+(lines[2] and 7 or math.floor((rowH-size)/2)); text(bold,x+8,ty,lines[1] or "",size,0.04,0.12,0.23,1); if lines[2] then text(bold,x+8,ty+size+2,lines[2],size,0.04,0.12,0.23,1) end
-        elseif i==3 or i==5 then center(bold,x,y+math.floor((rowH-16)/2),cw,fit(vals[i],bold,15,cw-12),15,0.04,0.12,0.23,1)
-        else center(font,x,y+math.floor((rowH-15)/2),cw,fit(vals[i],font,15,cw-12),15,0.04,0.12,0.23,1) end
-        if i>1 then line(x,y,x,y+rowH,1,0.80,0.87,0.93,1) end; x=x+cw
+  local bodyY=headerY+48
+  local bodyH=leftY+478-bodyY
+  local sec=now_seconds()
+  local all_completed=(#dateExams>0)
+  for _,e in ipairs(dateExams) do
+    if not e.end_min or sec < e.end_min*60 then
+      all_completed=false
+      break
+    end
+  end
+
+  if #dateExams==0 then
+    rect(leftX,bodyY,leftW,bodyH,0.95,0.97,0.99,1)
+    center(bold,leftX,bodyY+math.floor(bodyH/2)-12,leftW,
+      "NO EXAMINATIONS SCHEDULED FOR TODAY",27,0.35,0.43,0.53,1)
+  elseif all_completed then
+    rect(leftX,bodyY,leftW,bodyH,0.95,0.97,0.99,1)
+    center(bold,leftX,bodyY+math.floor(bodyH/2)-12,leftW,
+      "EXAMINATIONS COMPLETED TODAY",27,0.02,0.35,0.22,1)
+  else
+    local rows=cfg.rows_per_page
+    local tableH=leftY+478-bodyY
+    local rowH=math.floor(tableH/rows)
+    local maxPage=math.max(1,math.ceil(#dateExams/rows))
+    if page_index>maxPage then page_index=1 end
+    local start=(page_index-1)*rows+1
+    for r=1,rows do
+      local idx=start+r-1
+      local e=dateExams[idx]
+      local y=bodyY+(r-1)*rowH
+      rect(leftX,y,leftW,rowH,(r%2==0) and 0.91 or 0.99,(r%2==0) and 0.95 or 0.995,(r%2==0) and 0.98 or 1,1)
+      line(leftX,y+rowH,leftX+leftW,y+rowH,1,0.78,0.86,0.93,1)
+      if e then
+        local vals={tostring(idx),e.time,e.code,e.course,e.class_name or e.section or "—",e.room,e.invigilator,e.students}
+        local x=leftX
+        for i,cw in ipairs(cols) do
+          if i==4 then
+            local title_lines,size=wrap2(vals[i],bold,cw-16,17,12)
+            local ty=y+(title_lines[2] and 7 or math.floor((rowH-size)/2))
+            text(bold,x+8,ty,title_lines[1] or "",size,0.04,0.12,0.23,1)
+            if title_lines[2] then text(bold,x+8,ty+size+2,title_lines[2],size,0.04,0.12,0.23,1) end
+          elseif i==3 or i==5 then
+            center(bold,x,y+math.floor((rowH-16)/2),cw,fit(vals[i],bold,15,cw-12),15,0.04,0.12,0.23,1)
+          else
+            center(font,x,y+math.floor((rowH-15)/2),cw,fit(vals[i],font,15,cw-12),15,0.04,0.12,0.23,1)
+          end
+          if i>1 then line(x,y,x,y+rowH,1,0.80,0.87,0.93,1) end
+          x=x+cw
+        end
       end
     end
   end
