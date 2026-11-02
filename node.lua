@@ -253,7 +253,7 @@ function node.render()
   text(bold,leftX+24,leftY+17,("TODAY, "..selected.label:upper()),28,1,1,1,1)
   rect(leftX+leftW-245,leftY+12,220,42,0.94,0.97,1,1); center(bold,leftX+leftW-245,leftY+22,220,"TOTAL EXAMS: "..#dateExams,18,0.03,0.13,0.30,1)
   local headerY=leftY+64; rect(leftX,headerY,leftW,48,0.04,0.17,0.35,1)
-  local cols={65,145,140,250,145,120,285,168}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
+  local cols={65,175,140,220,145,120,285,168}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
   for i,cw in ipairs(cols) do center(bold,xx,headerY+14,cw,labels[i],16,1,1,1,1); if i>1 then line(xx,headerY,xx,headerY+48,1,0.45,0.59,0.74,1) end; xx=xx+cw end
   local bodyY=headerY+48
   local bodyH=leftY+478-bodyY
