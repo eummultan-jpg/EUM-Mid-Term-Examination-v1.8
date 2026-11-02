@@ -154,8 +154,25 @@ local function status_exams()
   local nxt,nxt_index,nxt_count=pick_rotating(upcoming,now)
   return cur,nxt,cur_index,cur_count,nxt_index,nxt_count
 end
+local function examination_progress()
+  local total=#all_exams
+  local completed=0
+  local today=today_iso()
+  local sec=now_seconds()
+  for _,e in ipairs(all_exams) do
+    if e.date~="" and e.date<today then
+      completed=completed+1
+    elseif e.date==today and e.end_min and sec>=e.end_min*60 then
+      completed=completed+1
+    end
+  end
+  local remaining=math.max(0,total-completed)
+  local percent=total>0 and math.floor((completed/total)*100+0.5) or 0
+  return completed,remaining,total,percent
+end
+
 local function draw_live_banner(x,y,w,h,e,rotation_index,rotation_count)
-  -- Compact LIVE EXAM banner in the previously unused area below the timetable title.
+  -- LIVE status and university-wide progress share the existing banner area.
   rect(x,y,w,h,0.985,0.992,1,1)
   rect(x,y,w,30,0.02,0.48,0.29,1)
   text(bold,x+16,y+7,"LIVE EXAM  •  ON AIR",18,1,1,1,1)
@@ -163,15 +180,22 @@ local function draw_live_banner(x,y,w,h,e,rotation_index,rotation_count)
     local counter=string.format("EXAM %d OF %d",rotation_index,rotation_count)
     text(bold,x+w-width(bold,counter,14)-14,y+9,counter,14,1,1,1,1)
   end
+
+  local completed,remaining,total,percent=examination_progress()
   if not e then
-    text(bold,x+18,y+43,"NO EXAMINATION IN PROGRESS",18,0.05,0.16,0.27,1)
-    text(font,x+18,y+66,"The live exam panel will update automatically.",13,0.25,0.34,0.44,1)
-    return
+    text(bold,x+18,y+37,"NO EXAMINATION IN PROGRESS",17,0.05,0.16,0.27,1)
+  else
+    local heading=(e.code~="" and e.code.."  —  " or "")..e.course
+    text(bold,x+16,y+35,fit(heading,bold,16,w-32),16,0.04,0.13,0.25,1)
+    local details=string.format("CLASS: %s   ROOM: %s   TIME: %s",e.class_name or e.section or "—",e.room~="" and e.room or "—",e.time or "—")
+    text(font,x+16,y+54,fit(details,font,12,w-32),12,0.06,0.20,0.34,1)
   end
-  local heading=(e.code~="" and e.code.."  —  " or "")..e.course
-  text(bold,x+16,y+39,fit(heading,bold,18,w-32),18,0.04,0.13,0.25,1)
-  local details=string.format("CLASS: %s     ROOM: %s     TIME: %s",e.class_name or e.section or "—",e.room~="" and e.room or "—",e.time or "—")
-  text(font,x+16,y+66,fit(details,font,14,w-32),14,0.06,0.20,0.34,1)
+
+  local summary=string.format("COMPLETED: %d   •   REMAINING: %d   •   TOTAL: %d   •   %d%% COMPLETE",completed,remaining,total,percent)
+  text(bold,x+16,y+68,fit(summary,bold,12,w-32),12,0.03,0.25,0.20,1)
+  local barX,barY,barW=x+16,y+h-8,w-32
+  rect(barX,barY,barW,4,0.84,0.89,0.93,1)
+  if percent>0 then rect(barX,barY,barW*percent/100,4,0.04,0.58,0.34,1) end
 end
 
 local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotation_count)
