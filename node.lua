@@ -215,55 +215,6 @@ local function draw_card(x,y,w,h,title,color,e,is_current,rotation_index,rotatio
   end
   text(bold,x+22,y+h-27,footer,footer_size,is_current and 0.02 or 0.02,is_current and 0.42 or 0.32,is_current and 0.22 or 0.60,1)
 end
-local function progress_counts()
-  local today=today_iso(); local sec=now_seconds()
-  local completed=0
-  for _,e in ipairs(all_exams) do
-    if e.date~="" and e.date<today then
-      completed=completed+1
-    elseif e.date==today and e.end_min and sec>=e.end_min*60 then
-      completed=completed+1
-    end
-  end
-  local total=#all_exams
-  return completed, math.max(0,total-completed), total, total>0 and math.floor((completed*100/total)+0.5) or 0
-end
-
-local function draw_progress_panel(x,y,w,h)
-  local completed,remaining,total,pct=progress_counts()
-  rect(x,y,w,h,0.985,0.995,1,1)
-  rect(x,y,w,38,0.03,0.23,0.46,1)
-  center(bold,x,y+9,w,"EXAMINATION PROGRESS (ALL EXAMS)",20,1,1,1,1)
-  local gap=12; local inner=16; local boxW=(w-inner*2-gap*3)/4
-  local values={
-    {tostring(completed),"Completed",0.88,0.97,0.89,0.02,0.34,0.13},
-    {tostring(remaining),"Remaining",0.86,0.93,0.99,0.03,0.20,0.42},
-    {tostring(total),"Total",0.91,0.93,0.97,0.05,0.13,0.28},
-    {tostring(pct).."%","Completed",0.84,0.96,0.85,0.02,0.34,0.13}
-  }
-  for i,v in ipairs(values) do
-    local bx=x+inner+(i-1)*(boxW+gap)
-    rect(bx,y+48,boxW,68,v[3],v[4],v[5],1)
-    center(bold,bx,y+55,boxW,v[1],31,v[6],v[7],v[8],1)
-    center(font,bx,y+91,boxW,v[2],17,0.04,0.10,0.18,1)
-  end
-  local barX=x+inner; local barY=y+h-27; local barW=w-inner*2
-  rect(barX,barY,barW,16,0.78,0.84,0.91,1)
-  if pct>0 then rect(barX,barY,barW*pct/100,16,0.02,0.55,0.16,1) end
-end
-
-local function draw_daily_status(x,y,w,h,kind,done,total)
-  if kind=="none" then
-    center(bold,x,y+h/2-12,w,"NO EXAMINATIONS SCHEDULED FOR TODAY",25,0.38,0.47,0.57,1)
-  elseif kind=="complete" then
-    local bw=math.min(w-120,980); local bx=x+(w-bw)/2; local by=y+(h-170)/2
-    rect(bx,by,bw,170,0.87,0.96,0.88,1)
-    rect(bx,by,bw,7,0.02,0.55,0.16,1)
-    center(bold,bx+20,by+38,bw-40,"EXAMINATIONS COMPLETED TODAY",31,0.02,0.30,0.12,1)
-    center(bold,bx+20,by+94,bw-40,string.format("%d OF %d EXAMS COMPLETED",done,total),25,0.03,0.12,0.20,1)
-  end
-end
-
 function node.render()
   local t=pkt_time(); local today=today_iso(); local now=sys.now()
   -- The dashboard stays anchored to the live PKT date; it does not rotate through old exam dates.
@@ -280,9 +231,9 @@ function node.render()
   rect(0,143,W,7,0.98,0.72,0.10,1)
   text(bold,60,168,"MID TERM EXAMINATION",40,0.03,0.12,0.25,1)
   text(font,60,214,"FALL 2026  •  28 OCTOBER – 06 NOVEMBER 2026",23,0.08,0.20,0.36,1)
-  rect(1380,162,490,68,0.99,0.75,0.10,1); center(bold,1380,181,490,"EXAMINATION TIMETABLE",29,0.03,0.12,0.25,1)
+  rect(1320,162,550,68,0.99,0.75,0.10,1); center(bold,1320,181,550,"EXAMINATION TIMETABLE",29,0.03,0.12,0.25,1)
   -- Date cards: TODAY and TOMORROW only.
-  local tabY,tabH,tabW,tabGap,tabX=250,82,320,18,50
+  local tabY,tabH,tabW,tabGap,tabX=250,82,500,22,50
   local todayObj=pkt_time(); local tomorrowObj=tomorrow_time()
   local tabItems={
     {label="TODAY",iso=today_iso(),date=date_label(todayObj),weekday=days[todayObj.wday]:upper(),active=true},
@@ -295,44 +246,69 @@ function node.render()
     center(bold,x,tabY+31,tabW,d.date,22,active and 1 or 0.04,active and 1 or 0.16,active and 1 or 0.30,1)
     center(font,x,tabY+58,tabW,d.weekday,15,active and 1 or 0.10,active and 1 or 0.24,active and 1 or 0.38,1)
   end
-  -- University-wide progress summary occupies the open center-top area;
-  -- the 1920x1080 canvas, branding, right sidebar and footer remain fixed.
-  draw_progress_panel(720,178,640,150)
   local selected={iso=today_iso(),label=date_label(todayObj)}; local dateExams={}
   for _,e in ipairs(all_exams) do if e.date==selected.iso then dateExams[#dateExams+1]=e end end
-  local leftX,leftY,leftW=50,400,1318; local rightX,rightW=1380,490
-  rect(leftX,leftY,leftW,428,0.985,0.995,1,1); rect(leftX,leftY,leftW,64,0.03,0.23,0.46,1)
+  local leftX,leftY,leftW=50,350,1318; local rightX,rightW=1380,490
+  rect(leftX,leftY,leftW,478,0.985,0.995,1,1); rect(leftX,leftY,leftW,64,0.03,0.23,0.46,1)
   text(bold,leftX+24,leftY+17,("TODAY, "..selected.label:upper()),28,1,1,1,1)
   rect(leftX+leftW-245,leftY+12,220,42,0.94,0.97,1,1); center(bold,leftX+leftW-245,leftY+22,220,"TOTAL EXAMS: "..#dateExams,18,0.03,0.13,0.30,1)
   local headerY=leftY+64; rect(leftX,headerY,leftW,48,0.04,0.17,0.35,1)
-  local cols={65,145,140,250,145,120,285,168}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
+  local cols={65,175,140,220,145,120,285,168}; local labels={"Sr. No.","Time","Course Code","Course Title","Class Name","Room","Invigilator","Students"}; local xx=leftX
   for i,cw in ipairs(cols) do center(bold,xx,headerY+14,cw,labels[i],16,1,1,1,1); if i>1 then line(xx,headerY,xx,headerY+48,1,0.45,0.59,0.74,1) end; xx=xx+cw end
-  local daily_done=0
-  for _,e in ipairs(dateExams) do if e.end_min and now_seconds()>=e.end_min*60 then daily_done=daily_done+1 end end
-  local daily_kind=(#dateExams==0 and "none") or (daily_done==#dateExams and "complete") or "normal"
-  local rows=cfg.rows_per_page; local tableH=leftY+428-(headerY+48); local rowH=math.floor(tableH/rows); local maxPage=math.max(1,math.ceil(#dateExams/rows)); if page_index>maxPage then page_index=1 end
-  local start=(page_index-1)*rows+1
-  if daily_kind=="normal" then
-  for r=1,rows do
-    local idx=start+r-1; local e=dateExams[idx]; local y=headerY+48+(r-1)*rowH
-    rect(leftX,y,leftW,rowH,(r%2==0) and 0.91 or 0.99,(r%2==0) and 0.95 or 0.995,(r%2==0) and 0.98 or 1,1)
-    line(leftX,y+rowH,leftX+leftW,y+rowH,1,0.78,0.86,0.93,1)
-    if e then
-      local vals={tostring(idx),e.time,e.code,e.course,e.class_name or e.section or "—",e.room,e.invigilator,e.students}
-      local x=leftX
-      for i,cw in ipairs(cols) do
-        if i==4 then local lines,size=wrap2(vals[i],bold,cw-16,17,12); local ty=y+(lines[2] and 7 or math.floor((rowH-size)/2)); text(bold,x+8,ty,lines[1] or "",size,0.04,0.12,0.23,1); if lines[2] then text(bold,x+8,ty+size+2,lines[2],size,0.04,0.12,0.23,1) end
-        elseif i==3 or i==5 then center(bold,x,y+math.floor((rowH-16)/2),cw,fit(vals[i],bold,15,cw-12),15,0.04,0.12,0.23,1)
-        else center(font,x,y+math.floor((rowH-15)/2),cw,fit(vals[i],font,15,cw-12),15,0.04,0.12,0.23,1) end
-        if i>1 then line(x,y,x,y+rowH,1,0.80,0.87,0.93,1) end; x=x+cw
+  local bodyY=headerY+48
+  local bodyH=leftY+478-bodyY
+  local sec=now_seconds()
+  local all_completed=(#dateExams>0)
+  for _,e in ipairs(dateExams) do
+    if not e.end_min or sec < e.end_min*60 then
+      all_completed=false
+      break
+    end
+  end
+
+  if #dateExams==0 then
+    rect(leftX,bodyY,leftW,bodyH,0.95,0.97,0.99,1)
+    center(bold,leftX,bodyY+math.floor(bodyH/2)-12,leftW,
+      "NO EXAMINATIONS SCHEDULED FOR TODAY",27,0.35,0.43,0.53,1)
+  elseif all_completed then
+    rect(leftX,bodyY,leftW,bodyH,0.95,0.97,0.99,1)
+    center(bold,leftX,bodyY+math.floor(bodyH/2)-12,leftW,
+      "EXAMINATIONS COMPLETED TODAY",27,0.02,0.35,0.22,1)
+  else
+    local rows=cfg.rows_per_page
+    local tableH=leftY+478-bodyY
+    local rowH=math.floor(tableH/rows)
+    local maxPage=math.max(1,math.ceil(#dateExams/rows))
+    if page_index>maxPage then page_index=1 end
+    local start=(page_index-1)*rows+1
+    for r=1,rows do
+      local idx=start+r-1
+      local e=dateExams[idx]
+      local y=bodyY+(r-1)*rowH
+      rect(leftX,y,leftW,rowH,(r%2==0) and 0.91 or 0.99,(r%2==0) and 0.95 or 0.995,(r%2==0) and 0.98 or 1,1)
+      line(leftX,y+rowH,leftX+leftW,y+rowH,1,0.78,0.86,0.93,1)
+      if e then
+        local vals={tostring(idx),e.time,e.code,e.course,e.class_name or e.section or "—",e.room,e.invigilator,e.students}
+        local x=leftX
+        for i,cw in ipairs(cols) do
+          if i==4 then
+            local title_lines,size=wrap2(vals[i],bold,cw-16,17,12)
+            local ty=y+(title_lines[2] and 7 or math.floor((rowH-size)/2))
+            text(bold,x+8,ty,title_lines[1] or "",size,0.04,0.12,0.23,1)
+            if title_lines[2] then text(bold,x+8,ty+size+2,title_lines[2],size,0.04,0.12,0.23,1) end
+          elseif i==3 or i==5 then
+            center(bold,x,y+math.floor((rowH-16)/2),cw,fit(vals[i],bold,15,cw-12),15,0.04,0.12,0.23,1)
+          else
+            center(font,x,y+math.floor((rowH-15)/2),cw,fit(vals[i],font,15,cw-12),15,0.04,0.12,0.23,1)
+          end
+          if i>1 then line(x,y,x,y+rowH,1,0.80,0.87,0.93,1) end
+          x=x+cw
+        end
       end
     end
   end
-  else
-    draw_daily_status(leftX,headerY+48,leftW,tableH,daily_kind,daily_done,#dateExams)
-  end
   local cur,nxt,curIndex,curCount,nxtIndex,nxtCount=status_exams()
-  draw_live_banner(1380,245,490,92,cur,curIndex,curCount)
+  draw_live_banner(1320,245,550,92,cur,curIndex,curCount)
   draw_card(rightX,350,rightW,280,"NOW  •  CURRENT EXAM",{0.02,0.48,0.29},cur,true,curIndex,curCount)
   draw_card(rightX,640,rightW,280,"NEXT  •  UPCOMING EXAM",{0.03,0.38,0.88},nxt,false,nxtIndex,nxtCount)
   -- Footer
