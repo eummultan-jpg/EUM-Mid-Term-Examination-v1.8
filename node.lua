@@ -322,6 +322,11 @@ function node.render()
       local x=leftX
       for i,cw in ipairs(cols) do
         if i==4 then local lines,size=wrap2(vals[i],bold,cw-16,17,12); local ty=y+(lines[2] and 7 or math.floor((rowH-size)/2)); text(bold,x+8,ty,lines[1] or "",size,0.04,0.12,0.23,1); if lines[2] then text(bold,x+8,ty+size+2,lines[2],size,0.04,0.12,0.23,1) end
+        elseif i==2 then
+          -- Keep the existing table geometry; use a compact, readable time style
+          -- so the complete time range fits inside the Time column.
+          local time_size=12
+          center(font,x,y+math.floor((rowH-time_size)/2),cw,fit(vals[i],font,time_size,cw-10),time_size,0.04,0.12,0.23,1)
         elseif i==3 or i==5 then center(bold,x,y+math.floor((rowH-16)/2),cw,fit(vals[i],bold,15,cw-12),15,0.04,0.12,0.23,1)
         else center(font,x,y+math.floor((rowH-15)/2),cw,fit(vals[i],font,15,cw-12),15,0.04,0.12,0.23,1) end
         if i>1 then line(x,y,x,y+rowH,1,0.80,0.87,0.93,1) end; x=x+cw
